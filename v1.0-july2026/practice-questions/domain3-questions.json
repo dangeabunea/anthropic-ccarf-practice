@@ -1,0 +1,1099 @@
+{
+  "meta": {
+    "title": "CCAR-F Domain 3 Exam Preparation Questions",
+    "heading": "Exam Preparation Questions",
+    "exam": {
+      "name": "Claude Certified Architect – Foundations",
+      "code": "CCAR-F"
+    },
+    "domain": {
+      "number": 3,
+      "name": "Claude Code Configuration & Workflows",
+      "weight": "20% of the exam"
+    },
+    "guide": {
+      "name": "official exam guide",
+      "version": "1.0",
+      "effective": "July 2026"
+    },
+    "version": "1.0.0",
+    "updated": "2026-11-10",
+    "disclaimer": "This is an unofficial study aid for self-evaluation. These are not official exam questions, they are not drawn from the real exam, and they are not affiliated with or endorsed by Anthropic. They were written against the public Domain 3 exam guide and the Claude Code documentation. If an explanation here conflicts with the official documentation, trust the documentation.",
+    "rehearseThreshold": 0.75,
+    "targetScore": 0.8,
+    "shuffleQuestions": false,
+    "shuffleOptions": false,
+    "showQuestionIds": true
+  },
+  "taskStatements": {
+    "3.1": {
+      "title": "CLAUDE.md hierarchy, scoping & modular organization",
+      "docs": "https://code.claude.com/docs/en/memory"
+    },
+    "3.2": {
+      "title": "Custom slash commands & skills",
+      "docs": "https://code.claude.com/docs/en/skills"
+    },
+    "3.3": {
+      "title": "Path-specific rules",
+      "docs": "https://code.claude.com/docs/en/memory#path-specific-rules"
+    },
+    "3.4": {
+      "title": "Plan mode vs. direct execution",
+      "docs": "https://code.claude.com/docs/en/commands#plan"
+    },
+    "3.5": {
+      "title": "Iterative refinement",
+      "docs": "https://code.claude.com/docs/en/best-practices"
+    },
+    "3.6": {
+      "title": "CI/CD integration",
+      "docs": "https://code.claude.com/docs/en/cli-reference"
+    }
+  },
+  "scenarios": {
+    "codegen": "Code Generation with Claude Code",
+    "devprod": "Developer Productivity with Claude",
+    "ci": "Claude Code for Continuous Integration"
+  },
+  "questions": [
+    {
+      "id": "q01",
+      "task": "3.1",
+      "kind": "skills",
+      "scenario": "codegen",
+      "difficulty": "standard",
+      "concept": "User-level CLAUDE.md is personal and not version-controlled; team standards belong at project level.",
+      "stem": "Your team's Spring Boot conventions (constructor injection only, SLF4J for logging, records for DTOs) were written months ago by the tech lead, and Claude follows them in the tech lead's sessions. A developer who joined this week clones the repository, and in their sessions Claude uses field injection and `System.out.println`. The tech lead confirms the conventions are stored in `~/.claude/CLAUDE.md` on their own machine. What should you do?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Move the conventions to the project `CLAUDE.md` and commit it to the repository.",
+          "why": "Correct. `~/.claude/CLAUDE.md` is user-level: it applies only to the person whose machine it is on, and it never goes through version control. A project-level `CLAUDE.md` (at the repo root or in `.claude/CLAUDE.md`) is committed, so every teammate gets it on clone and pull."
+        },
+        {
+          "id": "b",
+          "text": "Send the new developer a copy of the file to place in their own `~/.claude/CLAUDE.md`.",
+          "why": "This fixes one person for today. It is still user-level and still outside version control, so every developer ends up with a private copy that drifts, and the next new hire hits the same problem."
+        },
+        {
+          "id": "c",
+          "text": "Put the conventions in a `CLAUDE.local.md` file at the repository root.",
+          "why": "`CLAUDE.local.md` holds personal, project-specific preferences and is meant to be gitignored. It has the same sharing problem as the user-level file, just scoped to one project."
+        },
+        {
+          "id": "d",
+          "text": "Have the new developer run `/init` so Claude generates the conventions for them.",
+          "why": "`/init` drafts a CLAUDE.md by analyzing the codebase. It can't recover conventions that exist only in someone's home directory, so at best you get a guessed approximation of the agreed standards."
+        }
+      ],
+      "correct": "a",
+      "explanation": "When one developer gets an instruction and another doesn't, first check which level of the hierarchy holds it. Shared team standards must live at project level, under version control."
+    },
+    {
+      "id": "q02",
+      "task": "3.1",
+      "kind": "skills",
+      "scenario": "codegen",
+      "difficulty": "standard",
+      "concept": "Using @import in each package's CLAUDE.md to include only the standards relevant to that package.",
+      "stem": "A monorepo keeps shared standards in `docs/standards/`: `java-api.md`, `kafka-messaging.md`, `angular-ui.md`, and `mongodb-persistence.md`. The `backend/rest-api` package needs only `java-api.md` and `mongodb-persistence.md`, and the `web-app` package needs only `angular-ui.md`. Each package's maintainers know which files apply to their code. What is the most maintainable way to give each package exactly the standards it needs?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Import all four standards files from the root `CLAUDE.md`, so they apply everywhere.",
+          "why": "This loads every standard into every session, including UI rules while you work on Java persistence. That wastes context and invites conflicting guidance. It's the monolithic approach that modular imports are meant to replace."
+        },
+        {
+          "id": "b",
+          "text": "Add `@` imports for only the relevant standards to each package's `CLAUDE.md`.",
+          "why": "Correct. `@path` imports expand the referenced file into context alongside the CLAUDE.md that imports it. Each package maintainer picks the standards that apply, and every standard still has one source file. Relative paths resolve from the importing file, which is why the example uses `../../` from `backend/rest-api/`."
+        },
+        {
+          "id": "c",
+          "text": "Copy the relevant sections of each standards file into each package's `CLAUDE.md`.",
+          "why": "This also selects per package, but it duplicates content. When a standard changes, every copy has to be found and updated by hand, and the copies drift apart."
+        },
+        {
+          "id": "d",
+          "text": "Turn each standards file into a skill that developers invoke when working in a package.",
+          "why": "Skills load on demand when someone invokes them. Coding standards should apply automatically. If they depend on developers remembering to run a skill, they will be skipped."
+        }
+      ],
+      "correct": "b",
+      "explanation": "`@import` keeps CLAUDE.md files modular: there is one source file per standard, and each package chooses which ones it imports."
+    },
+    {
+      "id": "q03",
+      "task": "3.1",
+      "kind": "skills",
+      "scenario": "codegen",
+      "difficulty": "tricky",
+      "concept": "Using /memory to see which memory files a session loads before changing any instructions.",
+      "stem": "Until last week, Claude followed your team's REST pagination conventions in your sessions. Now it ignores them, even though `git log` shows no changes to any CLAUDE.md in the repository and your teammates see no difference. What is the most effective first step to find the cause?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Rewrite the pagination conventions with stronger emphasis, such as IMPORTANT and MUST.",
+          "why": "This treats a possible loading problem as a wording problem. Your teammates get the same project files and are fine, so the difference is probably in what your sessions load. Stronger wording wouldn't reveal that."
+        },
+        {
+          "id": "b",
+          "text": "Run `/compact` at the start of each session so the instructions get more attention.",
+          "why": "`/compact` summarizes the conversation history. It doesn't change which memory files load, so it can't explain or fix a difference in what your sessions read."
+        },
+        {
+          "id": "c",
+          "text": "Run `/memory` in your session and check which memory files are listed and what they contain.",
+          "why": "Correct. `/memory` lists the CLAUDE.md, CLAUDE.local.md, and other memory file locations across user and project scopes, and opens the auto-memory folder. Because git shows no project change and only you are affected, the likely cause is a file git doesn't track, such as your `~/.claude/CLAUDE.md` or `CLAUDE.local.md`, which may now contradict the team convention."
+        },
+        {
+          "id": "d",
+          "text": "Delete the project `CLAUDE.md` and regenerate it with `/init` to get a fresh copy.",
+          "why": "Git already shows the project file didn't change, and your teammates are fine with it. Regenerating it is destructive, targets the wrong file, and may lose content the team wrote."
+        }
+      ],
+      "correct": "c",
+      "explanation": "When only your sessions behave differently and the shared files haven't changed, look at your personal memory files first. `/memory` shows you what your session loads."
+    },
+    {
+      "id": "q04",
+      "task": "3.1",
+      "kind": "knowledge",
+      "scenario": "codegen",
+      "difficulty": "tricky",
+      "concept": ".claude/rules/ files without a paths field load in every session, like project CLAUDE.md.",
+      "stem": "Your root `CLAUDE.md` has grown to 700 lines and causes frequent merge conflicts. You split it into `.claude/rules/testing.md`, `.claude/rules/api-conventions.md`, and `.claude/rules/deployment.md`, none of which has YAML frontmatter, and you delete the moved sections from `CLAUDE.md`. How does Claude Code treat these three files?",
+      "options": [
+        {
+          "id": "a",
+          "text": "They load only if the root `CLAUDE.md` references each of them with an `@` import.",
+          "why": "Claude Code discovers `.claude/rules/` automatically, including subfolders. No import is needed. `@import` is a separate way to modularize CLAUDE.md."
+        },
+        {
+          "id": "b",
+          "text": "They load in every session, with the same priority as `.claude/CLAUDE.md`.",
+          "why": "Correct. A rule file without `paths` frontmatter is unconditional. It loads at launch, just like project-level CLAUDE.md content. You get focused, separately owned files without changing what Claude sees."
+        },
+        {
+          "id": "c",
+          "text": "They load only when Claude edits a file whose name matches the rule file's name.",
+          "why": "Rule files are never matched by their filename. Conditional loading comes only from a `paths` glob in the frontmatter, and these files have none."
+        },
+        {
+          "id": "d",
+          "text": "They are ignored until a `paths` field is added to each file's frontmatter.",
+          "why": "`paths` is optional. Without it, a rule applies everywhere. Adding it makes the rule conditional; it isn't what turns the rule on."
+        }
+      ],
+      "correct": "b",
+      "explanation": "`.claude/rules/` is a drop-in replacement for a monolithic CLAUDE.md. Files without `paths` load in every session, and adding `paths` makes a file conditional."
+    },
+    {
+      "id": "q05",
+      "task": "3.2",
+      "kind": "skills",
+      "scenario": "codegen",
+      "difficulty": "tricky",
+      "concept": "A personal command or skill with the same name as a project one takes precedence for you; give personal variants their own name.",
+      "stem": "Your repository has a team command, `.claude/commands/verify.md`, that runs the build, unit tests, and architecture tests. You wanted a version that also runs the end-to-end suite, so you created `~/.claude/commands/verify.md` with the extra step. A month later the team adds a security scan to the shared command. Every teammate's `/verify` now runs the scan, but yours doesn't. What explains this, and what should you do?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Your session holds a cached copy of the team command; you should run `/memory` to reload it.",
+          "why": "`/memory` lists and opens memory files such as CLAUDE.md, CLAUDE.local.md, and auto memory. It doesn't manage commands. Nothing is cached here: your personal file is a separate definition that wins over the team's."
+        },
+        {
+          "id": "b",
+          "text": "You should move your extra step into `CLAUDE.local.md` so it layers on top of the team command.",
+          "why": "`CLAUDE.local.md` holds personal project instructions. It doesn't define or extend slash commands, so your `/verify` would still be your own file, unchanged."
+        },
+        {
+          "id": "c",
+          "text": "You should commit your version as `.claude/commands/verify-e2e.md` so it stays in sync with the team's.",
+          "why": "A file in the project's `.claude/commands/` is shared with everyone on the next pull, so your personal variant would show up in every teammate's command list. Committing it doesn't sync it with `/verify` either; it's still a separate copy."
+        },
+        {
+          "id": "d",
+          "text": "Your personal `/verify` takes precedence over the team's; you should rename yours, e.g. `verify-e2e`.",
+          "why": "Correct. When a personal and a project definition share a name, the personal one wins for that user. You have been running only your own copy, so team changes never reach you. A distinct name in `~/.claude/` brings back the team command and keeps your variant private."
+        }
+      ],
+      "correct": "d",
+      "explanation": "Team commands are committed in the project's `.claude/commands/`. Personal variants go in `~/.claude/` under their own name, because a personal definition with the same name hides the team version for that user."
+    },
+    {
+      "id": "q06",
+      "task": "3.2",
+      "kind": "skills",
+      "scenario": "devprod",
+      "difficulty": "standard",
+      "concept": "context: fork runs a skill in an isolated subagent so verbose output doesn't pollute the main session.",
+      "stem": "A project skill, `/map-dependencies`, reads every Maven module and produces a detailed dependency report that often runs to several hundred lines. Developers run it in the middle of a feature, then find that Claude loses track of earlier decisions because the analysis crowds the conversation. They need only the final summary. Which change best addresses this?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Add a line to the skill telling Claude to keep its final report short.",
+          "why": "A shorter final report doesn't help much. The file reads and searches that produce it still land in the main conversation, so this treats a structural problem as a wording problem."
+        },
+        {
+          "id": "b",
+          "text": "Add `context: fork` so the skill runs in an isolated subagent.",
+          "why": "Correct. With `context: fork`, the skill runs in a subagent with its own context window, and only its result comes back to the main conversation. All the intermediate exploration stays out of the developer's session."
+        },
+        {
+          "id": "c",
+          "text": "Add `allowed-tools: Read Grep Glob` to the skill's frontmatter.",
+          "why": "`allowed-tools` controls tool access while the skill runs. The current docs describe it as pre-approving the listed tools. Either way, it doesn't change how much output lands in the main conversation. (The exam guide frames this field as restricting tools; the docs use `disallowed-tools` to remove them.)"
+        },
+        {
+          "id": "d",
+          "text": "Ask developers to run `/compact` after every run of the skill.",
+          "why": "This reacts after the damage is done, it loses detail, and it depends on people remembering. `context: fork` stops the output from entering the main context in the first place."
+        }
+      ],
+      "correct": "b",
+      "explanation": "For skills that produce verbose output (codebase analysis) or exploratory output (brainstorming alternatives), `context: fork` keeps that work in a separate context and returns only the result."
+    },
+    {
+      "id": "q07",
+      "task": "3.2",
+      "kind": "skills",
+      "scenario": "codegen",
+      "difficulty": "standard",
+      "concept": "Skills are for on-demand, task-specific workflows; CLAUDE.md is for always-loaded, universal standards.",
+      "stem": "Your root `CLAUDE.md` contains a 60-line, step-by-step procedure for preparing a hotfix release: branching, bumping the version, updating the changelog, and tagging. Developers use it about twice a month, but it loads into every session. The rest of the file holds coding standards that apply to all work. What should you do with the hotfix procedure?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Move it to `.claude/rules/hotfix-release.md` without any frontmatter.",
+          "why": "A rule file without `paths` still loads in every session, so nothing changes. This is a better fit for standards than for a procedure someone runs occasionally."
+        },
+        {
+          "id": "b",
+          "text": "Move it to each developer's personal `~/.claude/CLAUDE.md`.",
+          "why": "It still loads into every session, and now it's also unshared and has to be kept in sync by hand across machines."
+        },
+        {
+          "id": "c",
+          "text": "Turn it into a project skill in `.claude/skills/hotfix-release/`.",
+          "why": "Correct. Only a skill's short description stays in context; the full procedure loads on demand, so it costs almost nothing until someone needs it. It stays version-controlled for the whole team, and the universal coding standards stay in CLAUDE.md."
+        },
+        {
+          "id": "d",
+          "text": "Keep it in `CLAUDE.md`, but move it to the end of the file under a clear heading.",
+          "why": "Where something sits in CLAUDE.md doesn't change whether it loads. The whole file still loads in every session."
+        }
+      ],
+      "correct": "c",
+      "explanation": "Use CLAUDE.md for facts and standards that apply to all work. Use a skill for a multi-step workflow that runs only for a specific task."
+    },
+    {
+      "id": "q08",
+      "task": "3.2",
+      "kind": "skills",
+      "scenario": "devprod",
+      "difficulty": "standard",
+      "concept": "argument-hint tells developers which parameters a skill expects when they invoke it.",
+      "stem": "A project skill, `/review-pr`, fetches a pull request's diff and reviews it against the team's conventions. It needs a PR number to do anything useful. Developers often pick it from the `/` menu without supplying a number, and the run is wasted. You want developers to see the expected parameter when they invoke the skill. Which frontmatter field should you add?",
+      "options": [
+        {
+          "id": "a",
+          "text": "`disable-model-invocation: true`",
+          "why": "This stops Claude from loading the skill automatically, so it runs only when someone types `/review-pr`. It does nothing to tell that person which argument to pass."
+        },
+        {
+          "id": "b",
+          "text": "`context: fork`",
+          "why": "This isolates the skill's execution in a subagent. It's about context, not parameters, so developers would still invoke the skill without a PR number."
+        },
+        {
+          "id": "c",
+          "text": "`allowed-tools: Read Bash`",
+          "why": "This controls which tools the skill can use without prompting. It has nothing to do with the arguments a developer passes."
+        },
+        {
+          "id": "d",
+          "text": "`argument-hint: [pr-number]`",
+          "why": "Correct. `argument-hint` shows the expected arguments during autocomplete, at the moment the developer chooses the skill. The skill body receives what they type through `$ARGUMENTS` and can tell Claude to ask for the PR number if it's missing."
+        }
+      ],
+      "correct": "d",
+      "explanation": "Of these frontmatter fields, only `argument-hint` is about parameters. It shows developers what a skill expects when they invoke it."
+    },
+    {
+      "id": "q09",
+      "task": "3.3",
+      "kind": "skills",
+      "scenario": "codegen",
+      "difficulty": "standard",
+      "concept": "A `paths` glob rule loads conventions for one file type wherever it lives, and only when Claude works on a matching file.",
+      "stem": "Your team has agreed on idempotency and retry conventions for Kafka consumers. Consumer classes are named `*Listener.java` and live in three backend modules: `backend/detection`, `backend/rest-api`, and `backend/notifications`. To keep context lean, Claude should get these conventions whenever it works on a listener and at no other time. Which setup does that?",
+      "options": [
+        {
+          "id": "a",
+          "text": "A `.claude/rules/kafka-listeners.md` file containing the conventions, with no frontmatter.",
+          "why": "A rule file without `paths` loads at the start of every session, so Claude would carry the listener conventions while editing anything, including the frontend."
+        },
+        {
+          "id": "b",
+          "text": "A `.claude/rules/kafka-listeners.md` file with `paths: [\"backend/**/*Listener.java\"]`.",
+          "why": "Correct. The glob picks out listener files by name in any backend module, and the rule loads only when Claude reads or edits one of them. One file covers all three modules and any module added later."
+        },
+        {
+          "id": "c",
+          "text": "An `@docs/kafka-listeners.md` import added to the `CLAUDE.md` of each of the three modules.",
+          "why": "Each module's CLAUDE.md loads when Claude works on any file in that module, so the conventions arrive for every Java class there, not just listeners. A new module also has to remember to add the import."
+        },
+        {
+          "id": "d",
+          "text": "A `kafka-listener` skill whose description tells Claude to load it for listener work.",
+          "why": "Claude can load a skill on its own when the description seems relevant, but that's a judgment call, not a guarantee. It may skip the skill on a listener edit or load it when it isn't needed. A `paths` rule is triggered by the file itself."
+        }
+      ],
+      "correct": "b",
+      "explanation": "For a convention tied to a file type spread over several directories, a `.claude/rules/` file with a `paths` glob is both automatic and narrow. It loads for matching files only, wherever they live."
+    },
+    {
+      "id": "q10",
+      "task": "3.3",
+      "kind": "knowledge",
+      "scenario": "codegen",
+      "difficulty": "standard",
+      "concept": "Path-scoped rules load only when Claude reads or edits a matching file, which saves context.",
+      "stem": "The file `.claude/rules/angular-specs.md` has the frontmatter `paths: [\"web-app/**/*.spec.ts\"]`. A developer starts a session and asks Claude to fix a bug in a backend Java service. Claude never opens a frontend file during the session. What happens to the rule's content?",
+      "options": [
+        {
+          "id": "a",
+          "text": "It loads when the session starts, because every file in `.claude/rules/` loads at launch.",
+          "why": "Only rule files without `paths` load at launch. Adding a `paths` field is exactly what makes a rule conditional."
+        },
+        {
+          "id": "b",
+          "text": "It loads when the session starts, but Claude is told to ignore it for files that don't match.",
+          "why": "If that were true, path scoping would save no context or tokens. The rule isn't loaded and filtered afterwards. It isn't loaded at all until a match occurs."
+        },
+        {
+          "id": "c",
+          "text": "It never enters the context, because a path-scoped rule loads only when Claude reads or edits a matching file.",
+          "why": "Correct. A rule with `paths` loads when Claude uses Read, Write, or Edit on a matching file, or views one with a Bash read such as `cat`. In a backend-only session, no file matches, so the rule's content never uses any context."
+        },
+        {
+          "id": "d",
+          "text": "It loads as soon as the developer's prompt mentions a test or spec.",
+          "why": "Rules activate when a file path matches the glob, not when the prompt contains certain words."
+        }
+      ],
+      "correct": "c",
+      "explanation": "Path-scoped rules keep context relevant. Conventions for one part of the codebase cost nothing while Claude works elsewhere."
+    },
+    {
+      "id": "q11",
+      "task": "3.3",
+      "kind": "skills",
+      "scenario": "devprod",
+      "difficulty": "tricky",
+      "concept": "Glob semantics: * matches a single directory level; ** matches nested directories.",
+      "stem": "You add `.claude/rules/terraform.md` with the frontmatter `paths: [\"infra/*.tf\"]`. The rule loads when Claude edits `infra/main.tf`, but not when it edits `infra/modules/kafka/topics.tf` or `infra/modules/mongodb/cluster.tf`. What is the most likely cause?",
+      "options": [
+        {
+          "id": "a",
+          "text": "A path-scoped rule loads for only one matching file per session, and later files reuse that result.",
+          "why": "There is no one-file-per-session limit. The rule would load for any file its pattern matches, but these nested files don't match."
+        },
+        {
+          "id": "b",
+          "text": "The pattern needs a leading `**/`, as in `**/infra/*.tf`, because patterns match from the filesystem root.",
+          "why": "Rule patterns are relative to the rule's base directory (the project root for `.claude/rules/`), not the filesystem root. And `**/infra/*.tf` would still match only `.tf` files directly inside `infra/`, so the nested modules would still be missed."
+        },
+        {
+          "id": "c",
+          "text": "`*` matches files directly in `infra/` only, so the pattern needs `**`, as in `infra/**/*.tf`.",
+          "why": "Correct. A single `*` doesn't cross directory boundaries, so `infra/*.tf` matches only top-level files in `infra/`. `infra/**/*.tf` matches `.tf` files at any depth under `infra/`."
+        },
+        {
+          "id": "d",
+          "text": "A `CLAUDE.md` file inside `infra/` is overriding the rule for files in its subfolders.",
+          "why": "CLAUDE.md files and rules add to the context. They don't override or unload each other. The pattern itself is the problem."
+        }
+      ],
+      "correct": "c",
+      "explanation": "When a path-scoped rule fails to load for some files, check the glob first. `dir/*` covers one level, and `dir/**/*` covers every level beneath it."
+    },
+    {
+      "id": "q12",
+      "task": "3.4",
+      "kind": "skills",
+      "scenario": "codegen",
+      "difficulty": "standard",
+      "concept": "Plan mode for architectural decisions with several valid approaches and different infrastructure needs.",
+      "stem": "A detection service keeps its open safety events in memory, so they are lost whenever it restarts. You want them to survive restarts. The candidates are a compacted Kafka topic, a MongoDB collection, and an embedded state store, and each has different infrastructure and operational requirements. The change will touch the service's domain, persistence, and startup code. How should you approach this with Claude Code?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Start in plan mode so Claude can compare the approaches first.",
+          "why": "Correct. This task has several valid approaches, infrastructure trade-offs, and changes across several files. Plan mode lets Claude investigate and propose a design you can review before any file changes, which avoids expensive rework."
+        },
+        {
+          "id": "b",
+          "text": "Use the Explore subagent to pick the storage option, then implement its choice directly.",
+          "why": "Explore is a read-only search agent that reports back what it finds in the code. Letting it make the decision skips the step that matters here: weighing infrastructure trade-offs and reviewing a design before any code changes."
+        },
+        {
+          "id": "c",
+          "text": "Use direct execution and tell Claude to choose whichever option is simplest to implement.",
+          "why": "This hands an architectural decision to an implementation shortcut. The option that's simplest to code may be the worst to operate, and you'd only find out after changes across the domain, persistence, and startup code."
+        },
+        {
+          "id": "d",
+          "text": "Have Claude implement all three approaches on separate branches, then compare the results.",
+          "why": "This builds three solutions to compare designs that could be weighed on paper. Plan mode does that comparison cheaply, before anything is built."
+        }
+      ],
+      "correct": "a",
+      "explanation": "Plan mode signals: multiple valid approaches, architectural or infrastructure implications, and multi-file changes. When you can see these up front, plan first."
+    },
+    {
+      "id": "q13",
+      "task": "3.4",
+      "kind": "skills",
+      "scenario": "codegen",
+      "difficulty": "tricky",
+      "concept": "Direct execution for clearly scoped changes, even in a sensitive codebase.",
+      "stem": "A CI run fails with a `NullPointerException`. The stack trace points to one line in `RadarPositionValidator.validate()`, where the altitude can be null for some radar returns. The team has already agreed that such positions should be rejected as invalid. The fix is a null check plus one unit test, and the system is safety-critical. Which approach fits best?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Plan mode, because any change to a safety-critical system should start with a plan.",
+          "why": "Safety-critical code needs careful review and tests, and you still get both here. Plan mode is for tasks whose approach is uncertain. In this case the location, cause, and agreed behavior are all known, so there's nothing left to design."
+        },
+        {
+          "id": "b",
+          "text": "Direct execution: give Claude the stack trace and ask for the null check and a unit test.",
+          "why": "Correct. One file, a clear stack trace, and agreed behavior make this a well-scoped change. Direct execution with the stack trace as context is the proportionate choice, and the new test verifies the fix."
+        },
+        {
+          "id": "c",
+          "text": "Use the Explore subagent to map the whole radar-processing module before changing anything.",
+          "why": "Explore helps when discovery is broad and verbose. Here the stack trace has already located the problem, so mapping the whole module adds cost without adding information."
+        },
+        {
+          "id": "d",
+          "text": "Plan mode first, then split the fix into several small sequential prompts.",
+          "why": "This adds process to a one-line, well-understood fix. Splitting it further gains nothing and creates more places for mistakes."
+        }
+      ],
+      "correct": "b",
+      "explanation": "Choose the mode by how clear the scope is, not by how sensitive the system is. A well-understood, single-file change goes straight to direct execution."
+    },
+    {
+      "id": "q14",
+      "task": "3.4",
+      "kind": "skills",
+      "scenario": "devprod",
+      "difficulty": "standard",
+      "concept": "The Explore subagent isolates verbose discovery and returns a summary, so the main context survives multi-phase tasks.",
+      "stem": "You're migrating an old messaging client in an unfamiliar legacy codebase. Phase 1 finds every usage of the client and its configuration across about 300 files. Phases 2 and 3 design and apply the migration. In a previous attempt, phase 1's search output filled the conversation, and by phase 3 Claude had lost track of decisions made in phase 2. What should you do differently?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Run `/compact` whenever the context looks full, then continue with the next phase.",
+          "why": "This reacts after the context has already filled, and summarizing can drop the phase 2 decisions you need to keep. It manages the symptom instead of keeping the verbose output out."
+        },
+        {
+          "id": "b",
+          "text": "Run `/clear` between phases and restate each phase's goal from scratch.",
+          "why": "Clearing throws away the phase 2 decisions completely, which is the very thing that was lost last time."
+        },
+        {
+          "id": "c",
+          "text": "Build an MCP server that indexes the codebase and answers usage queries during the migration.",
+          "why": "This builds custom infrastructure for a one-off migration. Every query result still lands in the main conversation, so 300 files' worth of matches would crowd it just the same. The built-in Explore subagent already does the discovery in its own context and returns only a summary."
+        },
+        {
+          "id": "d",
+          "text": "Delegate phase 1 to the Explore subagent and keep only its summary.",
+          "why": "Correct. Explore is a read-only subagent built for codebase search. It does the verbose discovery in a separate context window and returns only a summary, so the main conversation keeps room for the design and implementation phases."
+        }
+      ],
+      "correct": "d",
+      "explanation": "In multi-phase work, isolate the noisy discovery phase with the Explore subagent so the main conversation keeps the decisions that matter."
+    },
+    {
+      "id": "q15",
+      "task": "3.4",
+      "kind": "knowledge",
+      "scenario": "codegen",
+      "difficulty": "standard",
+      "concept": "Combining plan mode for investigation and design with direct execution for implementation.",
+      "stem": "Your team is replacing a date-time library used in about 60 files across the backend. A senior engineer suggests: \"Use plan mode first, then switch to normal execution for the actual edits.\" Which statement best explains why this combination works?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Plan mode has a larger context window, so it can hold all 60 files in memory while it edits them.",
+          "why": "Plan mode is a permission mode, not a bigger context window, and it doesn't edit files at all. The edits happen after you leave plan mode."
+        },
+        {
+          "id": "b",
+          "text": "Plan mode lets Claude explore and design without changing files, so the approach is agreed before any edits.",
+          "why": "Correct. In plan mode Claude can read and analyze the codebase freely without modifying anything. You review and adjust the plan, then direct execution carries out the agreed approach. This avoids discovering a wrong approach after editing 60 files."
+        },
+        {
+          "id": "c",
+          "text": "Plan mode produces a plan that Claude then applies automatically, so no human review is needed.",
+          "why": "This misses the point. Plan mode is valuable because a person reviews the approach before execution. Skipping that review gives up the protection against rework."
+        },
+        {
+          "id": "d",
+          "text": "Executing first gives the plan real compile errors to work from, which makes planning more accurate.",
+          "why": "This reverses the order. Editing first means committing to an approach before investigating it, which is the expensive rework plan mode exists to prevent."
+        }
+      ],
+      "correct": "b",
+      "explanation": "Plan to investigate and design, then execute to implement. For large migrations, the two modes work together rather than competing."
+    },
+    {
+      "id": "q16",
+      "task": "3.5",
+      "kind": "skills",
+      "scenario": "codegen",
+      "difficulty": "standard",
+      "concept": "Giving 2–3 concrete input/output examples when prose descriptions produce inconsistent results.",
+      "stem": "You ask Claude to write a function that normalizes altitude strings from several radar feeds into feet. Your prose description (\"handle flight levels and feet, with or without units\") keeps producing implementations that treat `FL350`, `350`, and `35000ft` inconsistently. What is the most effective next step?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Rewrite the description in more detail, with a paragraph explaining each feed's format.",
+          "why": "The problem is ambiguity, not length. A longer paragraph still leaves open what a bare `350` means, so implementations will keep disagreeing."
+        },
+        {
+          "id": "b",
+          "text": "Ask Claude to \"be consistent\" and regenerate until the output looks right.",
+          "why": "This is vague and gives Claude nothing new to work from. You'd be retrying at random without settling the ambiguity."
+        },
+        {
+          "id": "c",
+          "text": "Give concrete input/output pairs: `FL350 → 35000`, `350 → 35000`, `35000ft → 35000`.",
+          "why": "Correct. Two or three concrete examples define the transformation precisely, including the ambiguous case of a bare number. This is the most reliable way to communicate an expected transformation when prose isn't working."
+        },
+        {
+          "id": "d",
+          "text": "Switch to plan mode so Claude can design the parser before writing it.",
+          "why": "The problem is an unclear requirement, not missing design. A plan built on the same ambiguous description carries the ambiguity forward."
+        }
+      ],
+      "correct": "c",
+      "explanation": "When a description keeps being read differently, stop rewording it and show 2–3 concrete examples of input and expected output."
+    },
+    {
+      "id": "q17",
+      "task": "3.5",
+      "kind": "skills",
+      "scenario": "codegen",
+      "difficulty": "standard",
+      "concept": "Test-driven iteration: write tests covering behavior, edge cases, and performance first, then iterate on failures.",
+      "stem": "You need a function that decides whether two aircraft positions break the separation minimums. The requirements include behavior exactly at the threshold, handling of missing altitude values, and processing a 3,600-position replay in under 2 seconds. Earlier attempts looked plausible but failed review on edge cases. Which workflow is most likely to produce a correct implementation?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Write tests for normal cases, edge cases, and the time limit first, then have Claude iterate on the failures.",
+          "why": "Correct. Tests written first turn the requirements, including edge cases and performance, into objective checks. Feeding specific failures back to Claude gives each iteration concrete, verifiable feedback instead of a general sense that something is wrong."
+        },
+        {
+          "id": "b",
+          "text": "Have Claude implement the function first, then generate tests based on the implementation.",
+          "why": "Tests derived from the code tend to confirm what the code already does, bugs included. They check consistency rather than the requirements."
+        },
+        {
+          "id": "c",
+          "text": "List the edge cases in prose and ask Claude to confirm its implementation handles each one.",
+          "why": "Claude's confirmation isn't verification. Without executable tests, nothing checks the behavior, and this is the same approach that already failed review."
+        },
+        {
+          "id": "d",
+          "text": "Have Claude implement it, then ask the same session to review its own code for edge-case gaps.",
+          "why": "A session reviewing its own work tends to share the blind spots that produced the bugs. It's also still opinion rather than an executable check."
+        }
+      ],
+      "correct": "a",
+      "explanation": "Test-driven iteration: write the tests first (expected behavior, edge cases, performance), then share the failures with Claude until they pass. For a specific edge case, provide the exact input and expected output as a test."
+    },
+    {
+      "id": "q18",
+      "task": "3.5",
+      "kind": "skills",
+      "scenario": "devprod",
+      "difficulty": "tricky",
+      "concept": "The interview pattern: Claude asks questions first to surface considerations you hadn't anticipated.",
+      "stem": "You've been asked to add caching to the endpoint that serves the safety-events summary. You haven't built caching for this system before, and you aren't sure how stale data should be handled when events close. What is the best way to start working with Claude?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Ask Claude to implement a cache with sensible defaults, then review the choices it made.",
+          "why": "The defaults would contain assumptions about staleness and invalidation, which is the very area you're unsure about. You'd be reviewing decisions you aren't equipped to judge, after the code is written."
+        },
+        {
+          "id": "b",
+          "text": "Have Claude interview you about requirements before proposing a design.",
+          "why": "Correct. In an unfamiliar area, having Claude ask questions first brings up design considerations you didn't think of, such as cache invalidation strategy, acceptable staleness for safety data, and behavior when the cache fails, before any code exists."
+        },
+        {
+          "id": "c",
+          "text": "Use the Explore subagent to find every caller of the summary endpoint before doing anything else.",
+          "why": "Explore answers questions about the code, such as where the endpoint is called. Your gap is about requirements and design decisions, which no amount of code search will settle."
+        },
+        {
+          "id": "d",
+          "text": "Give Claude input/output examples of the summary response before and after caching.",
+          "why": "Caching shouldn't change the response at all, so before/after examples would be identical. The open questions are about when data changes, which those examples can't capture."
+        }
+      ],
+      "correct": "b",
+      "explanation": "Use the interview pattern when you don't yet know what you don't know. Let Claude ask about requirements before it implements anything."
+    },
+    {
+      "id": "q19",
+      "task": "3.5",
+      "kind": "skills",
+      "scenario": "codegen",
+      "difficulty": "tricky",
+      "concept": "Address interacting issues together in one message and independent issues separately.",
+      "stem": "Claude renamed a field in the events API response from `startedAt` to `startTime`. When you test the change, you find three problems:\n1. The API documentation still lists the field as `startedAt`.\n2. The Angular event list still reads `startedAt`, so every date shows as empty.\n3. An unrelated service logs `Conection refused` instead of `Connection refused`.\nHow should you send these problems to Claude?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Send all three problems in one message so Claude fixes everything in a single pass.",
+          "why": "Problems 1 and 2 belong together, but adding the unrelated typo mixes independent work into the same change. That makes the result harder to check and harder to revert on its own."
+        },
+        {
+          "id": "b",
+          "text": "Send each problem in its own message and fix them strictly one at a time, in order.",
+          "why": "Problems 1 and 2 depend on the same decision: keep the new name `startTime` or go back to `startedAt`. Sent separately, Claude might update the documentation to `startTime` in one step and fix the UI by reverting the API in another, leaving the two out of sync."
+        },
+        {
+          "id": "c",
+          "text": "Fix problem 3 first because it's smallest, then send problems 1 and 2 one at a time.",
+          "why": "Fixing the typo first is harmless, but splitting problems 1 and 2 still separates two fixes that need one consistent decision about the field name."
+        },
+        {
+          "id": "d",
+          "text": "Describe problems 1 and 2 together in one detailed message, and handle problem 3 separately.",
+          "why": "Correct. Problems 1 and 2 interact: both depend on one decision about the field name, so they belong in one detailed message. Problem 3 is independent and can be fixed in its own step."
+        }
+      ],
+      "correct": "d",
+      "explanation": "Group issues whose fixes depend on each other into one detailed message. Fix independent issues one at a time."
+    },
+    {
+      "id": "q20",
+      "task": "3.6",
+      "kind": "skills",
+      "scenario": "ci",
+      "difficulty": "standard",
+      "concept": "`-p` / `--print` makes Claude Code run headless: one prompt in, the response on stdout, then the process ends.",
+      "stem": "A GitHub Actions job has two Claude Code steps. Step 1 runs `claude -p \"Draft release notes from the merged PRs\" > notes.md` and finishes in under a minute. Step 2 runs `claude \"Check notes.md for undocumented breaking changes\"` and never finishes; the runner kills it at its timeout. What is the cause?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Step 2 needs `--max-turns 1`, so Claude stops after one turn instead of looping.",
+          "why": "`--max-turns` caps agentic turns, and it only applies in print mode. It doesn't turn an interactive session into one that exits, so step 2 would still wait for a person."
+        },
+        {
+          "id": "b",
+          "text": "Step 2 is missing `-p`, so it starts an interactive session that waits for input.",
+          "why": "Correct. Step 1 works because `-p` runs the prompt, prints the response, and exits. Step 2 starts an interactive session, which keeps waiting for someone to type the next message, and in CI no one ever does."
+        },
+        {
+          "id": "c",
+          "text": "Step 2 should pipe the file in with `cat notes.md | claude ...` instead of naming it in the prompt.",
+          "why": "Piping changes how the content reaches Claude, not whether the session is interactive. The documented non-interactive form still needs the flag: `cat notes.md | claude -p \"...\"`."
+        },
+        {
+          "id": "d",
+          "text": "Step 2 needs `--output-format json`, because plain-text output can't be captured in CI.",
+          "why": "Step 1 already shows that text output is captured fine. `--output-format` also applies only in print mode, so it can't fix a step that isn't in print mode."
+        }
+      ],
+      "correct": "b",
+      "explanation": "Every scripted Claude Code call needs `-p` (`--print`). Compare the two steps: the one with the flag finishes, and the one without it waits for a person who never arrives."
+    },
+    {
+      "id": "q21",
+      "task": "3.6",
+      "kind": "skills",
+      "scenario": "ci",
+      "difficulty": "tricky",
+      "concept": "--output-format json with --json-schema produces validated, machine-parseable findings.",
+      "stem": "Your review step runs `claude -p`, and a script turns the findings into inline PR comments. Each finding needs `path`, `startLine`, `priority`, and `comment`. The prompt says \"respond only with a JSON array,\" but some runs add a sentence before the JSON or rename fields, which breaks the script. What is the most reliable fix?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Add `--output-format json` on its own, since it makes Claude return its findings as JSON fields.",
+          "why": "This is the tempting half-answer. `--output-format json` wraps the run's result and metadata in a JSON envelope, but the findings inside are still free text. Only a schema enforces the structure."
+        },
+        {
+          "id": "b",
+          "text": "Strengthen the prompt with a sample of the JSON and the words \"no other text.\"",
+          "why": "This is still a prompt-only request, and that already failed some of the time. A pipeline that posts PR comments needs enforced structure, not wording that usually works."
+        },
+        {
+          "id": "c",
+          "text": "Add `--output-format json` with a `--json-schema` for the findings.",
+          "why": "Correct. With `--json-schema`, Claude Code returns output validated against your schema once the run finishes, so `path`, `startLine`, `priority`, and `comment` (marked as required in the schema) are always present and named correctly. The posting script can rely on it."
+        },
+        {
+          "id": "d",
+          "text": "Have the script strip text before the first `[` and map any field names it recognizes.",
+          "why": "This is brittle cleanup after the fact. It breaks the next time the output varies in some way the script didn't anticipate, and it hides the real problem."
+        }
+      ],
+      "correct": "c",
+      "explanation": "In CI, a downstream step needs a guaranteed structure. Use `--output-format json` together with `--json-schema`, not prompt wording."
+    },
+    {
+      "id": "q22",
+      "task": "3.6",
+      "kind": "skills",
+      "scenario": "ci",
+      "difficulty": "standard",
+      "concept": "On re-runs, include prior findings and ask for only new or still-unaddressed issues.",
+      "stem": "Your pipeline reviews every push to an open PR. After the author pushes a commit that fixes some of the issues, the new review posts the same nine comments again, including the ones already fixed. Which change best prevents duplicate comments?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Review only the files changed in the latest commit instead of the whole PR.",
+          "why": "This narrows the input but doesn't tell Claude what it already reported. It would still repeat open issues in those files, and it can no longer say whether earlier issues elsewhere were fixed."
+        },
+        {
+          "id": "b",
+          "text": "Pass the prior findings and ask for only new or unresolved issues.",
+          "why": "Correct. With the previous findings in context, Claude can check each one against the new code, leave out the fixed ones, flag the ones still open, and add anything new, so nothing gets posted twice."
+        },
+        {
+          "id": "c",
+          "text": "Have a script drop any comment whose text exactly matches a comment from the earlier run.",
+          "why": "Wording varies between runs, so exact matching misses most duplicates. It also can't tell whether an issue was actually fixed."
+        },
+        {
+          "id": "d",
+          "text": "Store embeddings of earlier comments and suppress new ones that are semantically similar.",
+          "why": "This adds infrastructure to filter output after the fact. Similarity can't tell a fixed issue from an open one, and it can hide a genuinely new problem that resembles an old comment. Passing the prior findings to Claude handles this directly, with no extra system to run."
+        }
+      ],
+      "correct": "b",
+      "explanation": "On a re-run, pass the earlier findings to Claude so the review reports only what's new or still unresolved, instead of trying to deduplicate comments after they're generated."
+    },
+    {
+      "id": "q23",
+      "task": "3.6",
+      "kind": "skills",
+      "scenario": "ci",
+      "difficulty": "standard",
+      "concept": "CLAUDE.md gives CI runs project context (testing standards, fixtures); existing tests in context prevent duplicates.",
+      "stem": "A CI job asks Claude Code to generate tests for each PR. Reviewers complain that the tests check trivial getters, repeat scenarios that are already covered, and build their own test data instead of using the team's shared fixtures. Which change addresses the root causes?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Add a second Claude pass that scores each generated test and drops the low-value ones.",
+          "why": "A filter pass removes some weak tests, but the scoring pass doesn't know your standards, fixtures, or existing coverage either, so it can't fix the causes. It adds cost to clean up output that better context would have prevented."
+        },
+        {
+          "id": "b",
+          "text": "Add `--max-turns 1` so Claude spends less effort on low-value tests.",
+          "why": "`--max-turns` limits how many agentic turns a print-mode run can take. It says nothing about what makes a test valuable, and it may stop Claude before it reads the code under test."
+        },
+        {
+          "id": "c",
+          "text": "Add the instruction \"write only high-value tests and avoid duplicates\" to the prompt in the CI script.",
+          "why": "This is vague. Claude still doesn't know what your team counts as high-value, which fixtures exist, or which scenarios are already covered."
+        },
+        {
+          "id": "d",
+          "text": "Document standards and fixtures in `CLAUDE.md`; include existing tests in context.",
+          "why": "Correct. CI runs with `-p` load CLAUDE.md, so it's where you tell Claude which tests are worth writing and which fixtures to use. Including the existing tests shows Claude what's already covered, so it doesn't repeat it."
+        }
+      ],
+      "correct": "d",
+      "explanation": "Generated tests improve when Claude knows your standards and fixtures (from CLAUDE.md) and can see what's already tested (existing test files in context)."
+    },
+    {
+      "id": "q24",
+      "task": "3.6",
+      "kind": "skills",
+      "scenario": "ci",
+      "difficulty": "tricky",
+      "concept": "A separate review instance outperforms self-review by the session that generated the code.",
+      "stem": "Your pipeline uses one Claude Code session to implement a requested change and then, in the same session, review it before opening a PR. The reviews rarely flag anything, but human reviewers keep finding real problems. What is the most effective improvement?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Tell the same session to be highly critical and to assume its code contains bugs.",
+          "why": "This tries to fix a structural problem with wording. The session still carries the reasoning that produced the code, so it tends to repeat the same blind spots."
+        },
+        {
+          "id": "b",
+          "text": "Use `--resume` to reopen the generation session later and run the review there.",
+          "why": "Resuming restores the same conversation, including the generation context that causes the bias. Running the review later doesn't make it any more independent."
+        },
+        {
+          "id": "c",
+          "text": "Run the review in a separate Claude Code instance with fresh context.",
+          "why": "Correct. A separate instance doesn't carry the generating session's assumptions and reasoning, so it judges the change on what the diff actually contains. That makes it much better at catching what the author missed."
+        },
+        {
+          "id": "d",
+          "text": "Have the same session review the change twice and combine both sets of findings.",
+          "why": "Both passes share the same context and the same blind spots. Running the same biased review twice doesn't make it independent."
+        }
+      ],
+      "correct": "c",
+      "explanation": "Separate generation from review. The session that wrote the code is a poor reviewer of it; a separate instance is more effective."
+    },
+    {
+      "id": "q25",
+      "task": "3.1",
+      "kind": "knowledge",
+      "scenario": "codegen",
+      "difficulty": "tricky",
+      "concept": "Imported files load at launch with the CLAUDE.md that imports them; a subdirectory CLAUDE.md, and anything it imports, loads only when Claude works with files in that subdirectory.",
+      "stem": "Your ATC monorepo has these memory files:\n- The root `CLAUDE.md`, which contains `@docs/standards/java-api.md`\n- `backend/detection/CLAUDE.md`, which contains `@../../docs/standards/kafka-messaging.md`\n- Your own `~/.claude/CLAUDE.md`, with your personal preferences\nYou start Claude Code from the repository root and ask it to fix a layout bug in `web-app/src/app/alerts/alert-list.component.ts`. During the session, Claude reads and edits files under `web-app/` only. Which two statements about this session's context are true? Choose two.",
+      "options": [
+        {
+          "id": "a",
+          "text": "Your `~/.claude/CLAUDE.md` is skipped, because the project-level `CLAUDE.md` at the repository root replaces it.",
+          "why": "User-level and project-level files don't replace each other. Claude Code concatenates every discovered `CLAUDE.md` into context, so your personal file loads alongside the project one."
+        },
+        {
+          "id": "b",
+          "text": "`docs/standards/java-api.md` is in context from launch, because it loads together with the root `CLAUDE.md` that imports it.",
+          "why": "Correct. An `@path` import is expanded and loaded alongside the file that references it. The root `CLAUDE.md` loads at launch, so its import does too, whether or not Claude ever touches Java code."
+        },
+        {
+          "id": "c",
+          "text": "`docs/standards/java-api.md` stays out of context until Claude opens a Java file, because imports are expanded only when needed.",
+          "why": "Imports organize a file but don't defer it. The docs say they don't reduce context cost, because imported files load together with the `CLAUDE.md` that imports them. Deferred loading is what path-scoped rules and subdirectory `CLAUDE.md` files are for."
+        },
+        {
+          "id": "d",
+          "text": "When `backend/detection/CLAUDE.md` loads, its `../../` import resolves from the launch directory, so it points outside the repository.",
+          "why": "Relative import paths resolve from the file that contains the import, not from the working directory. From `backend/detection/`, `../../docs/standards/kafka-messaging.md` points at the repository's `docs/` folder as intended."
+        },
+        {
+          "id": "e",
+          "text": "`docs/standards/kafka-messaging.md` stays out of context, because the file that imports it loads only when Claude works in `backend/detection/`.",
+          "why": "Correct. A `CLAUDE.md` in a subdirectory of the launch directory loads on demand, once Claude reads, writes, or edits a file in that subdirectory, and its imports load with it. Claude stayed in `web-app/`, so neither the detection file nor its Kafka import entered context."
+        }
+      ],
+      "correct": [
+        "b",
+        "e"
+      ],
+      "explanation": "At launch, Claude Code loads the `CLAUDE.md` files at and above the launch directory, plus everything they import. A subdirectory `CLAUDE.md` and its imports wait until Claude works with a file in that subdirectory."
+    },
+    {
+      "id": "q26",
+      "task": "3.2",
+      "kind": "skills",
+      "scenario": "devprod",
+      "difficulty": "tricky",
+      "concept": "disable-model-invocation: true makes a skill run only when a developer invokes it; context: fork keeps its verbose work in a separate subagent and returns only the result.",
+      "stem": "Your project skill `replay-incident` takes an incident ID, replays the recorded track updates for that time window, and analyzes several hundred lines of detection-service logs before it writes a short timeline. Two problems have come up. Claude sometimes starts the skill on its own when a developer merely mentions an incident, which kicks off a long replay nobody asked for. And when the skill runs, the log analysis floods the developer's conversation. Which two frontmatter changes together fix both problems? Choose two.",
+      "options": [
+        {
+          "id": "a",
+          "text": "`disable-model-invocation: true`",
+          "why": "Correct. This stops Claude from loading the skill automatically, so it runs only when a developer types `/replay-incident`. It fixes the unwanted replays, but it doesn't change where the analysis output goes."
+        },
+        {
+          "id": "b",
+          "text": "`user-invocable: false`",
+          "why": "This is the opposite of what you need. It hides the skill from the `/` menu and stops developers from running it with `/replay-incident`, while Claude can still invoke it on its own."
+        },
+        {
+          "id": "c",
+          "text": "`allowed-tools: Read Grep Bash`",
+          "why": "`allowed-tools` lets Claude use the listed tools without asking permission while the skill runs. It doesn't decide who can invoke the skill, and it doesn't keep the log analysis out of the conversation."
+        },
+        {
+          "id": "d",
+          "text": "`agent: Explore`",
+          "why": "`agent` picks the subagent type to use when `context: fork` is set. On its own it doesn't move the skill into a subagent, and it has no effect on whether Claude invokes the skill automatically."
+        },
+        {
+          "id": "e",
+          "text": "`context: fork`",
+          "why": "Correct. The skill runs in a separate subagent with its own context, and only its result returns to the developer's conversation. It fixes the flooding, but Claude could still start the skill on its own."
+        }
+      ],
+      "correct": [
+        "a",
+        "e"
+      ],
+      "explanation": "Each problem needs its own field. `disable-model-invocation: true` controls who can start the skill, and `context: fork` controls where its work happens."
+    },
+    {
+      "id": "q27",
+      "task": "3.3",
+      "kind": "skills",
+      "scenario": "codegen",
+      "difficulty": "tricky",
+      "concept": "A path-scoped rule loads when Claude reads, writes, or edits a matching file, including a single-file Bash read such as cat; prompt wording and the mere presence of matching files don't trigger it.",
+      "stem": "You add `.claude/rules/avro-schemas.md` with the frontmatter `paths: [\"**/*.avsc\"]`. It holds your team's schema-evolution rules for the Avro schemas that define Kafka messages, which live in several backend modules. You start Claude Code from the repository root. In which two situations does the rule's content enter Claude's context? Choose two.",
+      "options": [
+        {
+          "id": "a",
+          "text": "Claude edits `backend/detection/src/main/avro/TrackUpdate.avsc` to add an optional field.",
+          "why": "Correct. The file matches `**/*.avsc`, and a path-scoped rule loads when Claude uses the Read, Write, or Edit tool on a matching file."
+        },
+        {
+          "id": "b",
+          "text": "Claude edits `TrackUpdate.java`, the class generated from that schema under `target/generated-sources/`.",
+          "why": "The rule matches files by path, not by what they were generated from. A `.java` file doesn't match `**/*.avsc`, so editing it doesn't load the rule."
+        },
+        {
+          "id": "c",
+          "text": "Your first prompt asks Claude to review the Avro schemas for compatibility problems, before it opens any file.",
+          "why": "Rules activate when Claude works with a matching file, not when the prompt mentions the topic. The rule loads once Claude actually opens one of the schemas."
+        },
+        {
+          "id": "d",
+          "text": "Claude runs `cat backend/notifications/src/main/avro/AlertRaised.avsc` in Bash to view the schema.",
+          "why": "Correct. A Bash command that counts as a read, such as `cat` or `head` on a single file, loads matching path-scoped rules just as the Read tool does."
+        },
+        {
+          "id": "e",
+          "text": "The session starts in a repository that contains 40 `.avsc` files spread across five modules.",
+          "why": "Matching files existing somewhere in the repository doesn't load the rule. A rule with `paths` doesn't load at launch at all; it waits until Claude works with a matching file."
+        }
+      ],
+      "correct": [
+        "a",
+        "d"
+      ],
+      "explanation": "A path-scoped rule is triggered by Claude reading or editing a matching file, whether through the file tools or a single-file Bash read. It isn't triggered by prompt wording or by matching files merely existing."
+    },
+    {
+      "id": "q28",
+      "task": "3.4",
+      "kind": "skills",
+      "scenario": "codegen",
+      "difficulty": "tricky",
+      "concept": "Direct execution fits well-scoped changes with a fully specified outcome; plan mode fits tasks with architectural implications, several valid approaches, or wide-reaching changes.",
+      "stem": "Your backlog for the ATC Safety Monitoring System has five tasks. Which two are best handled with direct execution rather than plan mode? Choose two.",
+      "options": [
+        {
+          "id": "a",
+          "text": "Split the detection service into separate conflict-detection and weather-hazard services, each with its own topics and collections.",
+          "why": "This is a service restructuring with boundary decisions, new Kafka topics, and new MongoDB collections. That's the architectural, multi-file profile plan mode is designed for."
+        },
+        {
+          "id": "b",
+          "text": "Decide whether alerts reach the Angular console through WebSockets or Server-Sent Events, then implement the choice.",
+          "why": "There are two valid approaches with different infrastructure and operational trade-offs, and the choice isn't made yet. Plan mode lets you compare them and agree on one before any code changes."
+        },
+        {
+          "id": "c",
+          "text": "In `TransponderValidator.isValidSquawk()`, reject squawk codes that contain an 8 or a 9, and add a unit test for each.",
+          "why": "Correct. It's one validation check in one method, with a fully specified rule: squawk codes are octal, so 8 and 9 never appear. There's nothing to design, so a plan adds only overhead."
+        },
+        {
+          "id": "d",
+          "text": "Move all seven Kafka consumers from blocking retries to retry topics with dead-letter topics, provisioned in every environment.",
+          "why": "This touches every consumer and the topic setup in each environment, and involves decisions about retry delays and dead-letter handling. Getting the approach wrong would mean expensive rework, so plan first."
+        },
+        {
+          "id": "e",
+          "text": "Add `@NotBlank` to the `callsign` field of `FlightPlanRequest`, plus a controller test that expects a 400 when it's empty.",
+          "why": "Correct. The change, its location, and the expected behavior are all known, and it touches one DTO and one test. That's a clearly scoped change suited to direct execution."
+        }
+      ],
+      "correct": [
+        "c",
+        "e"
+      ],
+      "explanation": "Choose the mode by how much is still undecided. A single validation with a fully specified outcome goes straight to direct execution, while restructurings, technology choices, and changes across many components start in plan mode."
+    },
+    {
+      "id": "q29",
+      "task": "3.5",
+      "kind": "skills",
+      "scenario": "devprod",
+      "difficulty": "tricky",
+      "concept": "Match the technique to the gap: the interview pattern when requirements are still unknown, concrete input/output examples when known requirements are read inconsistently.",
+      "stem": "You have two independent tasks this sprint.\n1. Add rate limiting to the gateway that ingests radar feeds. You've never designed rate limiting for streaming data, and nobody has decided what should happen to radar updates that arrive over the limit.\n2. Write a function that normalizes callsigns from different feeds. Your description, \"strip spaces, uppercase, and drop leading zeros from the flight number\", has produced three implementations that disagree on inputs such as `baw 0123` and `BAW123A`.\nWhich two steps are the most effective ways to move these tasks forward? Choose two.",
+      "options": [
+        {
+          "id": "a",
+          "text": "For task 1, have Claude interview you about requirements, such as the fate of over-limit updates, before it proposes a design.",
+          "why": "Correct. You're in an unfamiliar area with an open requirement. Having Claude ask questions first brings out considerations such as dropping versus queuing updates and per-feed limits before any code exists."
+        },
+        {
+          "id": "b",
+          "text": "For task 1, ask Claude to implement a token-bucket limiter with sensible defaults, then review the choices it made.",
+          "why": "The defaults would quietly decide what happens to over-limit radar updates, which is the very question nobody has answered. You'd be reviewing assumptions after the code is written instead of settling them first."
+        },
+        {
+          "id": "c",
+          "text": "For task 2, give Claude input/output pairs such as `baw 0123 → BAW123`, `BAW123A → BAW123A`, and `DLH 9 → DLH9`.",
+          "why": "Correct. The requirement is known but the prose keeps being read differently. A few concrete pairs, including the cases the implementations disagree on, define the transformation precisely."
+        },
+        {
+          "id": "d",
+          "text": "For task 2, rewrite the description as a longer paragraph that explains the callsign format each feed sends.",
+          "why": "More prose doesn't remove the ambiguity, such as whether a trailing letter belongs to the flight number. Three implementations have already read the current wording three ways."
+        },
+        {
+          "id": "e",
+          "text": "Send both tasks to Claude in one detailed message, so it can design the limiter and the normalizer together.",
+          "why": "Combining issues in one message helps when their fixes interact. These tasks are independent, so bundling them only makes each result harder to check, and it doesn't address either task's real gap."
+        }
+      ],
+      "correct": [
+        "a",
+        "c"
+      ],
+      "explanation": "Use the interview pattern when you don't yet know the requirements. Use 2–3 concrete input/output examples when you know them but the description keeps being interpreted inconsistently."
+    },
+    {
+      "id": "q30",
+      "task": "3.6",
+      "kind": "knowledge",
+      "scenario": "ci",
+      "difficulty": "tricky",
+      "concept": "Without --bare, claude -p loads CLAUDE.md as an interactive session does; with --output-format json and --json-schema, the validated output is in the structured_output field.",
+      "stem": "Your team adds a PR-review job to the ATC monorepo's pipeline. It runs `claude -p \"$REVIEW_PROMPT\" --output-format json --json-schema \"$(cat review-schema.json)\"`, and a script posts each finding as an inline PR comment. The team's review criteria live in the project `CLAUDE.md`. Which two statements about this job are true? Choose two.",
+      "options": [
+        {
+          "id": "a",
+          "text": "`--json-schema` takes effect only with `--output-format stream-json`, so this call returns findings that aren't validated.",
+          "why": "The docs pair `--json-schema` with `--output-format json`, exactly as this job does. `stream-json` is for receiving events in real time as the run progresses."
+        },
+        {
+          "id": "b",
+          "text": "Because the call doesn't use `--bare`, it loads the project `CLAUDE.md` as an interactive session would, so the criteria reach the run.",
+          "why": "Correct. Without `--bare`, `claude -p` discovers and loads CLAUDE.md, skills, hooks, and other configuration just as an interactive session does. That's how committed project context reaches a CI run."
+        },
+        {
+          "id": "c",
+          "text": "The script should read the findings from the `result` field, which holds them already parsed into JSON objects.",
+          "why": "In JSON output, `result` holds the run's text response. The schema-validated data is in a separate field, so a script that parses `result` is back to handling free text."
+        },
+        {
+          "id": "d",
+          "text": "Running the same command again after the author pushes a fix continues the earlier review, so posted findings aren't repeated.",
+          "why": "Each `claude -p` call starts a new conversation unless you pass `--continue` or `--resume`. To avoid duplicate comments, include the prior findings in the new run and ask only for new or unresolved issues."
+        },
+        {
+          "id": "e",
+          "text": "When the run produces output that matches the schema, the script finds it in the `structured_output` field of the response.",
+          "why": "Correct. With `--output-format json` and `--json-schema`, the response carries the run's metadata plus the validated data in `structured_output`. If a run ends without valid structured output, the field is absent, so the script should check for it first."
+        }
+      ],
+      "correct": [
+        "b",
+        "e"
+      ],
+      "explanation": "In a CI review job, CLAUDE.md supplies the project context (unless `--bare` turns discovery off), and `--output-format json` with `--json-schema` puts validated findings in `structured_output` for the posting script."
+    }
+  ]
+}
